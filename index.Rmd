@@ -63,6 +63,15 @@ PhD Crop Science
     - The boundaries between these concepts are not black and white
 
 - **Statistics is about distributions**
+---
+
+# What is a distribution?
+
+- 
+
+# What is a probability distribution?
+
+-
 
 ---
 class: center
@@ -72,20 +81,101 @@ class: center
 .pull-left[
 **Functions**
 
+No stochastic (random) component
+
 $$
 \begin{aligned}
-y=x
+y&=\underbrace{\beta_0 +\beta_1x}_{deterministic}\\
+y&=2+x
 \end{aligned}
 $$
+```{r echo=F, warning=F, message=F, out.width="50%"}
+library(ggplot2)
+library(plotly)
+
+x <- seq(1, 11, 1)
+y <- 2 + x
+
+x <- x - mean(x)
+y <- y - mean(y)
+df <- data.frame(x, y)
+
+ggplot(df, aes(x, y)) +
+  geom_point(size=2) +
+  geom_line(size=1.5)
+
+```
+
+
 ]
 
 
 .pull-right[
 **Distributions**
+
+$$
+\begin{aligned}
+y&=\underbrace{\beta_0 +\beta_1x}_{deterministic} + \underbrace{\epsilon}_{stochastic} \\
+\\
+y&=2+x + \epsilon, \:\:\:\: \epsilon\sim \mathcal{N(0,25)}\\
+\end{aligned}
+$$
+```{r echo=F, warning=F, message=F, out.width="50%"}
+library(ggplot2)
+library(gganimate)
+library(plotly)
+
+x <- seq(1, 11, 1)
+y <- 2 + x
+
+x <- x - mean(x)
+y <- y - mean(y)
+
+df <- data.frame(x, y)
+
+# For every row in `df`, compute a rotated normal density centered at `y` and shifted by `x`
+curves <- lapply(seq_len(NROW(df)), function(i) {
+  mu <- df$y[i]
+  range <- mu + c(-3, 3)
+  seq <- seq(range[1], range[2], length.out = 100)
+  data.frame(
+    x = -1 * dnorm(seq, mean = mu) + df$x[i],
+    y = seq,
+    grp = i
+  )
+})
+# Combine above densities in one data.frame
+curves <- do.call(rbind, curves)
+
+
+p=ggplot(df, aes(x, y)) +
+  geom_point() +
+  geom_line() +
+  # The path draws the curve
+  geom_path(data = curves, aes(group = grp))+
+  # The polygon does the shading. We can use `oob_squish()` to set a range.
+  geom_polygon(data = curves, aes(y = scales::oob_squish(y, c(-Inf, Inf)),group = grp))
+
+aa=p+transition_reveal(x)
+animate(aa, nframes = 48, renderer = gifski_renderer("./gganim.gif"))
+```
+
+
 ]
+
 ---
 
-# What is a distribution?
+```{r echo=F, warning=F, message=F, out.width="50%"}
+x <- seq(1,100,0.1)
+y <- 2 + x + rnorm(n = length(x),mean = 0,sd = 10)
+library(MASS)
+den3d <- kde2d(x, y)
+
+# the new part:
+library(plotly)
+plot_ly(x=den3d$x, y=den3d$y, z=den3d$z) %>% add_surface()
+```
+
 
 ---
 
@@ -102,4 +192,36 @@ $$
 - Prediction: Optimize the bias-variance trade off such that our models have high predictive ability
     - Generally don't care *why* the model works as long as it works
     - How many COVID cases will Alberta have in September?
+
+---
+# Parametric and non-parametric statistics
+
+**Parametric statistics**
+
+- We have an idea of what the probability distributions are, or we're at least willing to make some assumptions.
+- This is most statistics that we do, but there are important exceptions, especially with machine learning and prediction
+- Linear and non-linear models/Mixed models/Generalized Additive models (at least the error distribution)
+- Multivariate methods like PCA and Factor analysis
+
+**Non-parametric statistics**
+
+We don't know what the probability distributions are that our data represent and we are not willing to make assumptions
+
+- Rank methods/Kernel methods/Random forest
+- Machine learning methods tend to use non-parametric methods because the data sets are so large and have so many variables (features) that distributional assumptions can't easily be checked
+- Machine learning methods also tend to have prediction as the goal, not inference
+    - In biology we tend to want inference first
+
+---
+
+# Classic statistics: Simple linear regression
+
+
+
+
+---
+
+# Likelihood 
+
+
 
