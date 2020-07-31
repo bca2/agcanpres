@@ -86,6 +86,7 @@ No stochastic (random) component
 $$
 \begin{aligned}
 y&=\underbrace{\beta_0 +\beta_1x}_{deterministic}\\
+\\
 y&=2+x
 \end{aligned}
 $$
@@ -115,7 +116,7 @@ ggplot(df, aes(x, y)) +
 
 $$
 \begin{aligned}
-y&=\underbrace{\beta_0 +\beta_1x}_{deterministic} + \underbrace{\epsilon}_{stochastic} \\
+y&=\underbrace{\beta_0 +\beta_1x}_{deterministic} + \underbrace{\epsilon}_{stochastic}\\
 \\
 y&=2+x + \epsilon, \:\:\:\: \epsilon\sim \mathcal{N(0,25)}\\
 \end{aligned}
