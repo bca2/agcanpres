@@ -59,10 +59,13 @@ PhD Crop Science
 
 - Statistics is all about learning from data to do (generally) one of two things:
     - Inference (Classical statistics, Frequentist, Likelihood-ist, Bayesian)
+        - Model building, hypothesis tests
     - Prediction (Machine learning, AI, big data)
-    - The boundaries between these concepts are not black and white
+        - Will it rain tomorrow?
+        - How many bikes should we stock in August?
+    - The boundaries between these concepts are not always black and white
 
-- **Statistics is about distributions**
+- **Statistics is learning about and from _distributions_**
 ---
 
 # What is a distribution?
