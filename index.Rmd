@@ -52,22 +52,49 @@ PhD Crop Science
 
 # What is Statistics?
 
-- Inverse probability (mostly a defunct definition, but I really like it)
-    - Consider a 6 sided die. If it's a fair die then we know that the probability of rolling a **1** is $\frac{1}{6}$
-    - But what if instead I tell you that I roll a die 5 times and the results are: 1, 1, 5, 20. What's the most likely type of die that I rolled? (What's the data-generating model?)
-    
+<!-- - Inverse probability (mostly a defunct definition, but I really like it) -->
+<!--     - Consider a 6 sided die. If it's a fair die then we know that the probability of rolling a **1** is $\frac{1}{6}$ -->
+<!--     - But what if instead I tell you that I roll a die 5 times and the results are: 1, 1, 5, 20. What's the most likely type of die that I rolled? (What's the data-generating model?) -->
 
-- Statistics is all about learning from data to do (generally) one of two things:
+
+- Statistics is all about learning from data
+  
     - Inference (Classical statistics, Frequentist, Likelihood-ist, Bayesian)
-        - Model building, hypothesis tests
+        - Exploratory: Graphing, finding patterns, hypothesizing
+        - Confirmatory: Model building, hypothesis tests
     - Prediction (Machine learning, AI, big data)
         - Will it rain tomorrow?
         - How many bikes should we stock in August?
-    - The boundaries between these concepts are not always black and white
+- The boundaries between these concepts are not black and white
 
 - **Statistics is learning about and from _distributions_**
----
 
+---
+.pull-left[
+# Exploratory analysis
+
+- This is an approach to data analysis that focuses on non-parametric methods of interpreting data
+- Non-parametric really just refers to methods that don't try to use data to estimate parameters from probability distributions or models (which we'll get to in a bit)
+- We're looking for trends, relationships, and/or patterns that we might like to investigate further
+
+- Graphing data is a major exploratory method
+]
+
+.pull-right[
+**`mtcars` data**
+
+```{r}
+pairs(mtcars[,1:5])
+```
+]
+---
+# Confirmatory analysis
+
+- Confirmatory analysis is the testing or evaluation of possible hypotheses/models.
+- These analyses are typically parametric, but not always.
+- These analyses almost always try to conduct hypothesis tests (not always correctly)
+
+---
 # What is a distribution?
 
 - 
