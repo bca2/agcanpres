@@ -1,6 +1,6 @@
 ---
 title: "Statistics and such"
-subtitle: "Questions and distributions"
+subtitle: "Learning from data"
 author: "Brendan Alexander"
 date: "2020/7/28 (updated: `r Sys.Date()`)"
 output:
@@ -17,6 +17,26 @@ background-image: url(https://upload.wikimedia.org/wikipedia/commons/6/69/EM_Clu
 
 ```{r setup, include=FALSE}
 options(htmltools.dir.version = FALSE)
+library(ggplot2)
+```
+
+```{css, echo = FALSE}
+# .remark-slide-content {
+#   font-size: 28px;
+#   padding: 20px 80px 20px 80px;
+# }
+# .remark-code, .remark-inline-code {
+#   background: #f0f0f0;
+# }
+# .remark-code {
+#   font-size: 24px;
+# }
+.huge .remark-code { /*Change made here*/
+  font-size: 200% !important;
+}
+.tiny .remark-code { /*Change made here*/
+  font-size: 70% !important;
+}
 ```
 
 
@@ -24,6 +44,7 @@ Image credit: [Wikimedia Commons](https://upload.wikimedia.org/wikipedia/commons
 
 - The EM algorithm at work
 - Definitely not classical statistics
+- Statistics, machine learning, and computer science have come together to create interesting solutions to data problems
 
 ---
 
@@ -50,7 +71,7 @@ PhD Crop Science
 
 ---
 
-# What is Statistics?
+# What is statistics?
 
 <!-- - Inverse probability (mostly a defunct definition, but I really like it) -->
 <!--     - Consider a 6 sided die. If it's a fair die then we know that the probability of rolling a **1** is $\frac{1}{6}$ -->
@@ -58,20 +79,43 @@ PhD Crop Science
 
 
 - Statistics is all about learning from data
-  
-    - Inference (Classical statistics, Frequentist, Likelihood-ist, Bayesian)
-        - Exploratory: Graphing, finding patterns, hypothesizing
-        - Confirmatory: Model building, hypothesis tests
-    - Prediction (Machine learning, AI, big data)
-        - Will it rain tomorrow?
-        - How many bikes should we stock in August?
-- The boundaries between these concepts are not black and white
+- There are two main ways to learn: Inference and Prediction
+- There are *many* different ways to view statistics, but I think this is a pretty reasonable way to categorize things
 
-- **Statistics is learning about and from _distributions_**
+.pull-left[
+**Inference:** Learning about mechanisms and relationships
+]
+
+.pull-right[
+**Prediction:** Using massive quantities of data to predict events (elections, sports, how many hamburgers to prepare ahead of a lunch rush)
+]
+
+- The boundaries between these concepts are not black and white, this is just a general guide
 
 ---
+
+# Inference
+
+- Inference (Classical statistics, Frequentist, Likelihood-ist, Bayesian)
+    - Exploratory: Graphing, finding patterns, hypothesizing
+    - Confirmatory: Model building, hypothesis tests
+    - I classify inference as when we want to learn about real world distributions, relationships, or mechanisms.
+    - This is where most Agriculture data goes.
+    - These are usually parametric problems (parametric defined later)
+
+- Graphing and model estimation
+    - Linear regression (fitting a line)
+    - ANOVAs, ANCOVAs (still just linear regression but now with fancy names)
+    - Generalized models (logistic regression, Poisson/beta regression)
+    - Mixed models
+    - Non-linear models
+    - Probability distributions
+---
+
 .pull-left[
 # Exploratory analysis
+
+*Hypothesis generating*
 
 - This is an approach to data analysis that focuses on non-parametric methods of interpreting data
 - Non-parametric really just refers to methods that don't try to use data to estimate parameters from probability distributions or models (which we'll get to in a bit)
@@ -90,18 +134,66 @@ pairs(mtcars[,1:5])
 ---
 # Confirmatory analysis
 
-- Confirmatory analysis is the testing or evaluation of possible hypotheses/models.
+*Hypothesis testing*
+
+
+.pull-left[
+
+- Confirmatory analysis is the testing or evaluation of possible hypotheses/models using data.
 - These analyses are typically parametric, but not always.
 - These analyses almost always try to conduct hypothesis tests (not always correctly)
 
+$$
+\begin{aligned}
+H_0&: \beta_1=0\\
+H_A&:\beta_1\neq0
+\end{aligned}
+$$
+
+```{r}
+fit <- lm(hp~cyl,mtcars)
+confint(fit)
+```
+
+]
+
+.pull-right[
+```{r echo=F, message=F,warning=F,out.width="90%"}
+
+
+lm_eqn <- function(df){
+    m <- lm(hp ~ cyl, df);
+    eq <- substitute(italic(y) == a + b %.% italic(x)*","~~italic(r)^2~"="~r2, 
+         list(a = format(unname(coef(m)[1]), digits = 2),
+              b = format(unname(coef(m)[2]), digits = 2),
+             r2 = format(summary(m)$r.squared, digits = 3)))
+    as.character(as.expression(eq));
+}
+
+
+ggplot(mtcars) +
+ aes(x = cyl, y = hp) +
+ geom_point(size = 3L, colour = "#0c4c8a") +
+ geom_smooth(method="lm",se=TRUE, color="green", formula = y~x)+
+ labs(x = "Number of Cylinders (cyl)", y = "Horsepower (hp)") +
+ geom_text(x = 5, y = 300, label = lm_eqn(mtcars), parse = TRUE, size=5)+
+ theme_minimal()
+```
+
+]
+
 ---
-# What is a distribution?
+# Lots of other output, what does it all mean?
 
-- 
 
-# What is a probability distribution?
+- There's way more output here than just the two parameter estimates for a linear function.
+- We aren't dealing with functions, we're dealing with distributions
 
--
+.tiny[
+```{r,size='tiny'}
+summary(fit)
+```
+]
 
 ---
 class: center
@@ -207,24 +299,234 @@ library(plotly)
 plot_ly(x=den3d$x, y=den3d$y, z=den3d$z) %>% add_surface()
 ```
 
+---
+# Simulate our own model
+
+Let's create some linear regression data from the ground-up.
+We need:
+
+1. A functional relationship between two variables.
+2. A probability distribution to describe error.
+    We'll use the normal distribution to start.
+
+$$y_i = f(x_i)$$
+
+$$\epsilon_i \sim \mathcal{N}(0,\sigma^2)$$
+
+The true statistical model is:
+
+$$y_i \sim f(x_i) + \epsilon_i$$
+or, for simple linear regression
+
+$$\underbrace{y_i}_{DV} \sim \underbrace{\beta_0}_{Intercept} + \underbrace{\beta_1}_{slope}\underbrace{x_i}_{IV}+\underbrace{\epsilon_i}_{error}$$
+where DV is dependent variable, and IV is independent variable.
+
+---
+
+## Create a functional relationship
+
+.pull-left[
+$$y_i=2+5x_i$$
+
+```{r echo=F,message=F,results = 'hide'}
+# Create a data frame of x values
+# This creates a data frame object with 50 rows and 1 column (x)
+# The values of x are sequential integers from 1 to 50
+# I've classified these values to be stored as "numeric".
+# We can perform all normal math operations on numeric data
+
+df <- data.frame(xvar = as.numeric(1:50))
+
+# Easy!
+# Check the data frame to make sure it is what we think it is
+
+df
+
+# Check the data structure (is it a data frame?) and the variable classes (numeric?)
+str(df)
+
+# how do the first rows look?
+head(df)
+
+# do we have all 50 rows?
+tail(df)
+
+# Great!
+# Load an R package called "Tidyverse"
+# Tidyverse is a collection of R packages that work well together
+# The point of these packages is to manipulate and visualize data
+
+library(tidyverse)
+
+# Using tidyverse, we can modify our data frame to create a new variable, just like in excel
+
+
+df <- df %>% # %>% is called a piping operator, it connects these 2 lines of code
+    mutate(yvar = 5 + 2*xvar) 
+
+# mutate is the command to create a new variable
+# The new variable can be based on old variables, in this case, 'x'
+
+# Inspect the new data frame on your own.
+# Are the variables sill both numeric?
+# Is it still a data frame?
+
+```
+
+]
+
+.pull-right[
+
+```{r echo=F,fig.cap= "A beautiful plot, by me. This is the plot [p1]. Notice that this is not a statistical relationship, there is no error.", results = 'hide', out.width="70%"}
+# Create an object called "p1" using ggplot2
+
+p1 <- ggplot(data = df, aes(x = xvar, y = yvar)) +
+    geom_point()
+p1
+
+```
+]
+---
+
+
+## Generate and plot the error
+
+.pull-left[
+```{r}
+set.seed(90210)
+e <- data.frame(error = rnorm(n = 50, mean = 0, sd = 10))
+```
+
+Looks alright.
+Keep this in mind whenever you check the assumption of normality for real data: it's not always pretty, but sometimes it's good enough.
+
+]
+
+.pull-right[
+```{r echo=F}
+# Notice that there are nested commands here.
+# The density function acts first, and then the plot function
+plot(density(e$error))
+```
+]
+
+
+
+---
+
+## Create the statistical relationship
+
+.pull-left[
+OK! 
+Let's combine these components to simulate some regression data.
+
+
+```{r echo=F, results = 'hide'}
+set.seed(90210)
+df2 <- data.frame(xvar = as.numeric(1:50),
+                 e = rnorm(n = 50, mean = 0, sd = 10))
+
+# Easy!
+# Check the data frame to make sure it is what we think it is
+
+df2
+
+# Check the data structure (is it a data frame?) and the variable classes (numeric?)
+str(df2)
+head(df2)
+tail(df2)
+
+df2 <- df2 %>%
+    mutate(yvar = 5 + 2*xvar + e) 
+```
+.tiny[
+```{r}
+summary(lm(yvar~xvar,df2))
+```
+]
+
+
+]
+
+.pull-right[
+
+```{r echo=F,message=F, results = 'hide'}
+# Create an object called "p1" using ggplot
+# method = lm creates the line
+# se=TRUE gives the confidence interval
+# Neat?
+
+p2 <- ggplot(data = df2, aes(x = xvar, y = yvar)) +
+    geom_point()+
+    geom_smooth(method=lm, se=TRUE) 
+p2
+
+```
+
+]
+---
+
+# Ordinary least squares (OLS) vs. Maximum likelihood (ML)
+
+We just used OLS, it's a very old technique based entirely on linear algebra.
+
+- OLS is just linear algebra and has minimal assumptions
+    - it can be done easily by hand for small data sets
+    - This is what people did back in 1930
+- OLS produces the best linear unbiased estimates (BLUEs) as long as some assumptions are met:
+    - Linear model is reasonable
+    - Constant variance
+    - Normality isn't technically an assumption for estimation, but it is for producing intervals
+- ML is very powerful but also makes a lot of distributional assumptions about the data
+    - We're looking to maximize the likelihood of seeing our data by testing many different models/parameter estimates
 
 ---
 
 
-# Inference and Prediction
+# Visualization of a log-likelihood surface (for ML)
+
+We fit fancy, complex models with maximum likelihood.
+But what is this mathematical voodoo?
+
+$$\mathcal{L}(parameters|obs)=\prod_{i=1}^nf(obs_i)$$
+We're asking how *likely* (not probable, likelihoods do integrate to 1) a parameter value is *given* the data we observed.
+What you're used to is asking how *likely*  your data are *given* a null hypothesis.
+See the difference?
+Notice how (in a way) we're treating our observations as fixed (we saw these, they aren't changing), and the parameter value is flexible.
+
+The log-likelihood is usually used instead for numerical stability.
+Products change to sums when a $\log$ function is applied.
+
+$$\log{\mathcal{L}(parameters|obs)}=\sum_{i=1}^n \log{f(obs_i)}$$
+Either way, the goal is to maximize the likelihood (or log-likelihood) to find good parameter estimates.
+
+This is where the `d` class of distribution functions come into play.
+The likelihood of seeing a $50$ when we have a normal distribution with $\mu =40$ and $\sigma^2=10$ is:
+
+```{r}
+dnorm(x = 50,mean = 40,sd = sqrt(10))
+
+# log likelihood is:
+log(dnorm(x = 50,mean = 40,sd = sqrt(10)))
+```
+
+The likelihood of seeing a $50$ and a $38$ when we have a normal distribution with $\mu =40$ and $\sigma^2=10$ is:
+
+```{r}
+dnorm(x = 50,mean = 40,sd = sqrt(10))*dnorm(x = 38,mean = 40,sd = sqrt(10))
+
+# log likelihood is:
+log(dnorm(x = 50,mean = 40,sd = sqrt(10))) + log(dnorm(x = 38,mean = 40,sd = sqrt(10)))
+```
 
 
-- Inference: We want to draw conclusions about a population based on data
-    - How do herbicides interact?
-    - What factors influence crop growth?
-    - Which biological theories are supported by the data?
-    
+What we want to do is explore a wide range of possible parameter values (parameter surface).
+We'll choose parameter values that have the maximum likelihood (log-likelihood) values.
 
-- Prediction: Optimize the bias-variance trade off such that our models have high predictive ability
-    - Generally don't care *why* the model works as long as it works
-    - How many COVID cases will Alberta have in September?
+
 
 ---
+
 # Parametric and non-parametric statistics
 
 **Parametric statistics**
@@ -245,7 +547,8 @@ We don't know what the probability distributions are that our data represent and
 
 ---
 
-# Classic statistics: Simple linear regression
+# Classic statistics: Simple linear
+
 
 
 
@@ -253,6 +556,19 @@ We don't know what the probability distributions are that our data represent and
 ---
 
 # Likelihood 
+
+# Prediction
+
+- Prediction (Machine learning, AI, big data)
+    - Will it rain tomorrow?
+    - How many bikes should we stock in August?
+    - Prediction models usually don't care about having a biologically correct model.
+        - All that matters is being able to predict outcomes, understanding the biology isn't the concern
+    - Agriculture is becoming a lot more prediction-based with precision Ag (drones, tractor sensors, satelites)
+
+- Machine learning, AI, etc.
+    - Random forest, self organizing maps, neural nets, k-means
+
 
 
 
