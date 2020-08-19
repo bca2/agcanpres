@@ -112,6 +112,28 @@ PhD Crop Science
     - Probability distributions
 ---
 
+# Parametric and non-parametric statistics
+
+**Parametric statistics**
+
+- We have an idea of what the probability distributions are, or we're at least willing to make some assumptions.
+- This is most statistics that we do in biology and agriculture, but there are important exceptions, especially with machine learning and prediction
+- Linear and non-linear models/Mixed models/Generalized Additive models (at least the error distribution)
+- Multivariate methods like PCA and Factor analysis
+
+**Non-parametric statistics**
+
+We don't know what the probability distributions are that our data represent and we are not willing to make assumptions
+
+- Rank methods/Kernel methods/Random forest
+- Machine learning methods tend to use non-parametric methods because the data sets are so large and have so many variables (features) that distributional assumptions can't easily be checked
+- Machine learning methods also tend to have prediction as the goal, not inference
+    - In biology we tend to want inference first
+
+Both parametric and non-parametric methods can be used for inference, but parametric methods are more powerful (at the cost of making assumptions)
+---
+
+
 .pull-left[
 # Exploratory analysis
 
@@ -489,85 +511,209 @@ We fit fancy, complex models with maximum likelihood.
 But what is this mathematical voodoo?
 
 $$\mathcal{L}(parameters|obs)=\prod_{i=1}^nf(obs_i)$$
-We're asking how *likely* (not probable, likelihoods do integrate to 1) a parameter value is *given* the data we observed.
-What you're used to is asking how *likely*  your data are *given* a null hypothesis.
-See the difference?
-Notice how (in a way) we're treating our observations as fixed (we saw these, they aren't changing), and the parameter value is flexible.
 
 The log-likelihood is usually used instead for numerical stability.
 Products change to sums when a $\log$ function is applied.
 
 $$\log{\mathcal{L}(parameters|obs)}=\sum_{i=1}^n \log{f(obs_i)}$$
-Either way, the goal is to maximize the likelihood (or log-likelihood) to find good parameter estimates.
+The goal is to maximize the likelihood (or log-likelihood) to find good parameter estimates.
 
-This is where the `d` class of distribution functions come into play.
-The likelihood of seeing a $50$ when we have a normal distribution with $\mu =40$ and $\sigma^2=10$ is:
+---
 
+# An example with the normal distribution
+
+.pull-left[
+.tiny[
 ```{r}
-dnorm(x = 50,mean = 40,sd = sqrt(10))
-
-# log likelihood is:
-log(dnorm(x = 50,mean = 40,sd = sqrt(10)))
+x <- seq(30, 50, length.out = 100)
+hx <- dnorm(x,mean = 40,sd = sqrt(10))
 ```
+]
 
-The likelihood of seeing a $50$ and a $38$ when we have a normal distribution with $\mu =40$ and $\sigma^2=10$ is:
+The log likelihood of seeing a $50$ and a $38$ when we have a normal distribution with $\mu =40$ and $\sigma^2=10$ is:
 
+.tiny[
 ```{r}
-dnorm(x = 50,mean = 40,sd = sqrt(10))*dnorm(x = 38,mean = 40,sd = sqrt(10))
-
-# log likelihood is:
 log(dnorm(x = 50,mean = 40,sd = sqrt(10))) + log(dnorm(x = 38,mean = 40,sd = sqrt(10)))
 ```
+]
+]
+
+.pull-right[
+.tiny[
+```{r , out.width="70%"}
+plot(x, hx, type="l", lty=2, xlab="x value",
+  ylab="Density", main="Normal distribution")
+```
+]
+]
+
 
 
 What we want to do is explore a wide range of possible parameter values (parameter surface).
 We'll choose parameter values that have the maximum likelihood (log-likelihood) values.
 
+---
+# Let's create some non-normal data!
+
+.pull-left[
+.tiny[
+```{r}
+set.seed(90210)
+
+lldata <- data.frame(xvar=as.numeric(seq(0,5,0.1)))
+
+lldata2 <- lldata%>%
+  mutate(lam=50*exp(-.9*xvar))%>%
+  mutate(yvar=rpois(n = nrow(lldata), lambda = lam))
+```
+]
+
+Here's our equation:
+
+$$\lambda_i=a\cdot e^{b \cdot x}$$
+
+$$\lambda_i=50\cdot e^{-0.9 \cdot x}$$
+$$y_i \sim Poisson(\lambda_i)$$
+]
+
+.pull-right[
+.tiny[
+```{r, out.width="70%"}
+plot1 <- ggplot(data = lldata2,aes(x=xvar,y=yvar))
+plot1 <- plot1 + geom_point()
+plot1 <- plot1 + 
+  labs(title="Plot of present count by distance from the Christmas tree.",
+       x ="Distance", y = "Presents")
+plot1
+```
+]
+]
 
 
 ---
 
-# Parametric and non-parametric statistics
+.pull-left[
+<!-- We'll need to estimate some reasonable starting parameters. -->
+<!-- This can be a guessing game, but usually there are a few shortcuts. -->
+<!-- For example, if we log transform our data and perform a linear analysis then we can get reasonable starting values. -->
+<!-- Other models have similar tricks. -->
+<!-- If you know what your parameters represent, then you can often make good guesses from a graph. -->
 
-**Parametric statistics**
+<!-- Now, remember that a model using the log-transformed values is not what we actually want. -->
+<!-- We're just after starting parameter estimates, and this should get us into the right ballpark. -->
 
-- We have an idea of what the probability distributions are, or we're at least willing to make some assumptions.
-- This is most statistics that we do, but there are important exceptions, especially with machine learning and prediction
-- Linear and non-linear models/Mixed models/Generalized Additive models (at least the error distribution)
-- Multivariate methods like PCA and Factor analysis
+<!-- By log-transforming the observations we're trying to approximate the log-transformed response surface. -->
 
-**Non-parametric statistics**
+<!-- $$\log{y_i}=\log{a} + bx \approx \log{\hat{y_i}}=\log{a} +bx$$ -->
+<!-- These equations ARE NOT equal, but maybe we can get good estimates of the parameters. -->
+<!-- Notice that we have $\log{a}$, not $a$. -->
 
-We don't know what the probability distributions are that our data represent and we are not willing to make assumptions
+```{r echo=F, results=F}
+llfit <- lm(log(yvar+0.01)~xvar,data=lldata2)
+summary(llfit)
+```
 
-- Rank methods/Kernel methods/Random forest
-- Machine learning methods tend to use non-parametric methods because the data sets are so large and have so many variables (features) that distributional assumptions can't easily be checked
-- Machine learning methods also tend to have prediction as the goal, not inference
-    - In biology we tend to want inference first
+
+
+```{r echo=F}
+# Vector of possible 'a' values
+a_range <- seq(from = 57-20, to = 57+20, by=.1)
+
+# Vector of possible 'b' values
+b_range <- seq(from = -1.1-.5, to = -1.1+.5, by = 0.01)
+```
+
+
+
+```{r echo=F}
+# Create all possible combinations of 'a' and 'b'
+search_grid <- expand.grid(a_range,b_range)
+```
+
+
+```{r echo=F}
+# Create an empty data frame for the loop
+ll_data <- data.frame(ll=as.numeric())
+
+for(j in 1:nrow(search_grid)){
+  
+  for(i in 1:nrow(lldata2)){
+    # Create a lambda value based on observed x and 
+      # assumed values for 'a' and 'b'
+    lam_test <- search_grid[j,1]*exp(search_grid[j,2]*lldata2[i,1])
+    
+    # Calculate the likelihood of seeing the value of 'y' 
+      # we actually saw given lambda
+    log_lik <- log(dpois(x = lldata2[i,3],lambda = lam_test))
+    
+    # Store a single log likelihood value
+    ll_data[i, 1] <- log_lik
+  }
+  # Sum all the log-likelihoods for a particular
+    # Combination of 'a' and 'b'
+  search_grid[j,3] <- sum(ll_data$ll)
+
+}
+names(search_grid) <- c("a", "b", "loglik")
+```
+
+
+
+```{r echo=F, out.width="90%"}
+ll_contour <- ggplot(data = search_grid, aes(x=a, y=b, z=loglik)) + 
+     geom_raster(data=search_grid, aes(fill=loglik), show.legend = TRUE) +
+     scale_fill_gradient(limits=range(search_grid$loglik), high = 'blue', low = 'yellow') + 
+     geom_contour(aes(colour = ..level..)) +
+     scale_colour_gradient(guide = 'none')
+ll_contour <- ll_contour+
+  scale_x_continuous(breaks = seq(min(search_grid$a), max(search_grid$a), by = 3))+
+  scale_y_continuous(breaks = seq(min(search_grid$b), max(search_grid$b), by = 0.05))
+ll_contour <- ll_contour+
+  labs(title="Log-likelihood surface",
+        x ="Parameter 'a'", y = "Parameter 'b'")
+
+ll_contour
+```
+]
+
+.pull-right[
+Looks neat!
+How does it compare to a real `glm()` fit?
+
+.tiny[
+```{r}
+fit_test <- glm(yvar~xvar,family=poisson,data=lldata2)
+coef(fit_test)
+```
+]
+
+Not bad!
+Looks like if we ran enough simulations that we'd probably get about the same answer.
+
+Note that:
+
+```{r}
+exp(3.9521029)
+```
+
+]
 
 ---
 
-# Classic statistics: Simple linear
+# How's it look in 3D?
 
-
-
-
+```{r message=F, warning=F}
+plot_ly(x=search_grid$a, y=search_grid$b, z=search_grid$loglik, type="scatter3d",color = search_grid$loglik)
+```
 
 ---
 
-# Likelihood 
+# Prediction example: Random forest
 
-# Prediction
 
-- Prediction (Machine learning, AI, big data)
-    - Will it rain tomorrow?
-    - How many bikes should we stock in August?
-    - Prediction models usually don't care about having a biologically correct model.
-        - All that matters is being able to predict outcomes, understanding the biology isn't the concern
-    - Agriculture is becoming a lot more prediction-based with precision Ag (drones, tractor sensors, satelites)
 
-- Machine learning, AI, etc.
-    - Random forest, self organizing maps, neural nets, k-means
+
 
 
 
