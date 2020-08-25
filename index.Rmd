@@ -511,7 +511,7 @@ We just used OLS, it's a very old technique based entirely on linear algebra.
 ---
 
 
-# Visualization of a log-likelihood surface (for ML)
+# Calculate the likelihood
 
 We fit fancy, complex models with maximum likelihood.
 But what is this mathematical voodoo?
@@ -719,7 +719,7 @@ plot_ly(x=search_grid$a, y=search_grid$b, z=search_grid$loglik, type="scatter3d"
 
 Before we talk about random forest, we have to know what a CART model is
 
-# Classification and regression trees
+## Classification and regression trees
 
 - They are essentially decision trees
 - Regression or classification
